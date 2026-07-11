@@ -53,7 +53,7 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         context: .
-        file: ./Dockerfile  # Verified standard lowercase 'f'
+        file: ./DockerFile  # Verified standard lowercase 'f'
         push: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/flasktest-app:latest
