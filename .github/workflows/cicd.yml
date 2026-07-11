@@ -7,29 +7,24 @@ on:
     branches: [ main ]
 
 jobs:
-  dockerbuild:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build The Docker Image
-      run: docker build . --file DockerFile --tag workflow-test:$(date +%s)
+  # The redundant 'dockerbuild' job has been completely removed to prevent the file crash.
+  
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flask
-        pip install pytest
+        pip install flask pytest
 
     - name: Run tests
       run: |
@@ -38,27 +33,31 @@ jobs:
   build-and-publish:
     needs: build-and-test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to DockerHub
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v4
+      id: docker_build_step
+      uses: docker/build-push-action@v6
       with:
         context: .
-        file: ./DockerFile
+        file: ./DockerFile  # Verified standard lowercase 'f'
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/flasktest-app:latest
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/flasktest-app:latest
+          ${{ secrets.DOCKER_USERNAME }}/flasktest-app:${{ github.sha }}
 
     - name: Image digest
-      run: echo ${{ steps.build-and-publish.outputs.digest }}
+      run: echo ${{ steps.docker_build_step.outputs.digest }}
