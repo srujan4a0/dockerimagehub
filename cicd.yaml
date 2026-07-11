@@ -7,6 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
+  # The redundant 'dockerbuild' job has been completely removed to prevent the file crash.
+  
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -31,7 +33,7 @@ jobs:
   build-and-publish:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' # Prevents pulling PR branches from publishing to your registry
+    if: github.event_name == 'push'
 
     steps:
     - name: Checkout code
@@ -47,15 +49,15 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build and push Docker image
-      id: docker_build_step   # Added step ID so it can be referenced next
+      id: docker_build_step
       uses: docker/build-push-action@v6
       with:
         context: .
-        file: ./Dockerfile
+        file: ./Dockerfile  # Verified standard lowercase 'f'
         push: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/flasktest-app:latest
           ${{ secrets.DOCKER_USERNAME }}/flasktest-app:${{ github.sha }}
 
     - name: Image digest
-      run: echo ${{ steps.docker_build_step.outputs.digest }} # Fixed output path
+      run: echo ${{ steps.docker_build_step.outputs.digest }}
